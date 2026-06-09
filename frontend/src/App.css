@@ -1789,3 +1789,120 @@ body {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ================================================================= */
+/* PRINT / PDF MEDIA STYLES */
+/* ================================================================= */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+  
+  .no-print,
+  .main-navbar,
+  .tab-bar,
+  .filter-panel,
+  .main-footer,
+  button,
+  .modal-close-btn,
+  .modal-footer {
+    display: none !important;
+  }
+  
+  .app-container, 
+  .content-area, 
+  .panel,
+  .users-tab-view,
+  .all-apps-tab,
+  .analytics-tab-view {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .content-area {
+    padding-top: 10px !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+    page-break-inside: avoid !important;
+  }
+  
+  .stat-card {
+    border: 1px solid #b2bec3 !important;
+    background: #f5f6fa !important;
+    padding: 12px !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+  }
+  
+  .stat-val {
+    font-size: 18px !important;
+    color: #000000 !important;
+  }
+  
+  .stat-lbl {
+    font-size: 8px !important;
+    color: #2f3640 !important;
+  }
+
+  .analytics-row-top, 
+  .analytics-row-bottom {
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  .chart-panel, 
+  .list-panel {
+    border: 1px solid #b2bec3 !important;
+    background: #ffffff !important;
+    padding: 16px !important;
+    margin-bottom: 24px !important;
+    page-break-inside: avoid !important;
+    border-radius: 6px !important;
+  }
+  
+  .audit-table {
+    font-size: 11px !important;
+  }
+
+  .audit-table th {
+    background-color: #f5f6fa !important;
+    color: #000000 !important;
+    border-bottom: 2px solid #2f3640 !important;
+    padding: 8px !important;
+  }
+  
+  .audit-table td {
+    border-bottom: 1px solid #dcdde1 !important;
+    color: #000000 !important;
+    padding: 8px !important;
+  }
+
+  /* Text elements */
+  h2, h3, h4, h5, h6, p, span, strong, td, th {
+    color: #000000 !important;
+  }
+
+  .user-usage-row-card {
+    background-color: #ffffff !important;
+    border: 1px solid #b2bec3 !important;
+    page-break-inside: avoid !important;
+    color: #000000 !important;
+  }
+
+  .app-tag-badge {
+    background: #f5f6fa !important;
+    border: 1px solid #b2bec3 !important;
+    color: #000000 !important;
+  }
+}
