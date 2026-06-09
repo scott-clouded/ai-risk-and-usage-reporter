@@ -20,6 +20,10 @@ The **AI Risk & Usage Reporter** is a modern, lightweight, full-stack cybersecur
     *   *Active Consumer Leaderboard:* Highlights top employees generating AI traffic.
     *   *14-Day Traffic Timeline:* Custom SVG timeline representing transaction frequency trends over time.
 *   **📋 All Registrations Audit Grid:** Tabular directory tracking AI and standard apps side-by-side. Highlights unused integrations with a prominent **`Unused (No Logins)`** badge in red to help admins safely target and eliminate bloated or stale app registrations.
+*   **📥 Comprehensive Report Exports:** Features multi-format sharing models for security teams and directors:
+    *   *JSON Bundles:* Export your entire analyzed dashboard into a portable `.json` report file. Other team members can instantly load this file into the uploader to view the full interactive dashboard with zero configurations or server access needed.
+    *   *Tabular CSVs:* Export individual, formatted spreadsheets of both your scanned applications list and user interaction directory.
+    *   *Executive PDFs:* Highly-tailored print-media CSS automatically strips away navbars, filters, search fields, and buttons, converting your active visual dashboard into a clean black-and-white page-broken PDF report.
 *   **🔐 Private & Local Fallback:** Employs in-memory processing. Your uploaded corporate CSV files never leave your system and are never written to any database. If the backend is unavailable, the app falls back to a complete local client-side preview mode with rich mock data.
 
 ---
