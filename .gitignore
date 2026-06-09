@@ -1,0 +1,57 @@
+# Keys
+github_ai
+github_ai.pub
+gitkey
+gitkey.pub
+
+# Personal Notes
+outline.txt
+premise.txt
+
+# Dependency folders
+node_modules/
+jspm_packages/
+
+# Build artifacts
+dist/
+build/
+out/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor & System Files
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Ignore local CSV exports for privacy/security
+*.csv
+test_inputs/
+
+# Ignore local documentation backups
+README_backup.md
+
+# Ignore SSH keys, outline blueprints, and prompt premises
+gitkey
+gitkey.pub
+outline.txt
+premise.txt
+
+
