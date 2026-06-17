@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { parseCSV } from './utils/parser.js';
 import { analyzeData } from './utils/analyzer.js';
 import { generateMockData } from './utils/mockGenerator.js';
@@ -8,9 +10,16 @@ import { generateMockData } from './utils/mockGenerator.js';
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+
 // Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
+
+// Serve static assets from frontend build directory
+app.use(express.static(frontendDistPath));
 
 // Configure Multer for in-memory file storage
 const upload = multer({ storage: multer.memoryStorage() });
@@ -64,6 +73,13 @@ app.get('/api/demo', (req, res) => {
   } catch (error) {
     console.error('Error generating demo data:', error);
     res.status(500).json({ error: 'Failed to generate demo data.' });
+  }
+});
+
+// Fallback all non-API requests to index.html (supporting SPA routing)
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
   }
 });
 

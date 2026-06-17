@@ -77,7 +77,7 @@ interface AnalysisResults {
   analytics: Analytics;
 }
 
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = window.location.port === '5173' ? 'http://localhost:5001/api' : '/api';
 
 function App() {
   // Application State
