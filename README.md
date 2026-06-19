@@ -20,6 +20,9 @@ The **AI Risk & Usage Reporter** is a modern, lightweight, full-stack cybersecur
     *   *Active Consumer Leaderboard:* Highlights top employees generating AI traffic.
     *   *14-Day Traffic Timeline:* Custom SVG timeline representing transaction frequency trends over time.
 *   **📋 All Registrations Audit Grid:** Tabular directory tracking AI and standard apps side-by-side. Highlights unused integrations with a prominent **`Unused (No Logins)`** badge in red to help admins safely target and eliminate bloated or stale app registrations.
+    *   *Interactive Filtering & Sorting:* Deep search across publishers and app names. Quickly filter between 'AI Workloads Only' and 'Standard Tools', and dynamically sort lists by Total Sign-ins, Trust Score, Risk Level, or Name.
+    *   *Manual Triage:* Gives admins the power to forcefully mark unflagged applications as AI workloads (or unmark false positives) and flag unsanctioned shadow tools for removal.
+*   **🏷️ Marked Applications View:** A dedicated workspace tab isolating all applications manually flagged during the triage process, featuring independent CSV exporting for targeted IT security action.
 *   **📥 Comprehensive Report Exports:** Features multi-format sharing models for security teams and directors:
     *   *JSON Bundles:* Export your entire analyzed dashboard into a portable `.json` report file. Other team members can instantly load this file into the uploader to view the full interactive dashboard with zero configurations or server access needed.
     *   *Tabular CSVs:* Export individual, formatted spreadsheets of both your scanned applications list and user interaction directory.

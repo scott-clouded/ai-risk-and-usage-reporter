@@ -52,9 +52,13 @@ export function isAIApplication(name, publisher = '') {
   const normalizedName = name.toLowerCase();
   const normalizedPub = publisher.toLowerCase();
   
-  return AI_KEYWORDS.some(kw => 
+  const hasAIKeyword = AI_KEYWORDS.some(kw => 
     normalizedName.includes(kw) || normalizedPub.includes(kw)
   );
+
+  const hasStandaloneAI = /\bai\b/i.test(name);
+  
+  return hasAIKeyword || hasStandaloneAI;
 }
 
 /**

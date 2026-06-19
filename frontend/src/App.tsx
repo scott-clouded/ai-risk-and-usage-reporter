@@ -90,11 +90,50 @@ function App() {
   const [serverOnline, setServerOnline] = useState(false);
   
   // UI Controls
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'risk' | 'all' | 'users'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'risk' | 'all' | 'users' | 'marked'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState<'All' | 'High' | 'Medium' | 'Low'>('All');
   const [selectedApp, setSelectedApp] = useState<AIApp | null>(null);
   const [showHowToExport, setShowHowToExport] = useState(false);
+
+  // All Apps Filtering & Sorting
+  const [allAppsSearch, setAllAppsSearch] = useState('');
+  const [allAppsFilter, setAllAppsFilter] = useState<'All' | 'AI' | 'Standard'>('All');
+  const [allAppsSort, setAllAppsSort] = useState<'Name' | 'SignIns' | 'RiskLevel' | 'TrustScore'>('SignIns');
+
+  // Application Manual Marks
+  const [userAIMarks, setUserAIMarks] = useState<Record<string, boolean>>({});
+  const [markedForRemoval, setMarkedForRemoval] = useState<Set<string>>(new Set());
+
+  const getAppEffectiveIsAI = (app: AIApp) => {
+    if (userAIMarks[app.appId] !== undefined) return userAIMarks[app.appId];
+    return !!app.isAI;
+  };
+
+  const toggleMarkForRemoval = (appId: string) => {
+    setMarkedForRemoval(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(appId)) newSet.delete(appId);
+      else newSet.add(appId);
+      return newSet;
+    });
+  };
+
+  const exportMarkedToCSV = () => {
+    if (!results) return;
+    const markedApps = results.allApplications.filter(app => userAIMarks[app.appId] !== undefined || markedForRemoval.has(app.appId));
+    const headers = ['Application ID', 'Name', 'Publisher', 'Marked As AI', 'Marked For Removal', 'Total Logins', 'Risk Level'];
+    const rows = markedApps.map(app => [
+      app.appId,
+      app.name,
+      app.publisher,
+      getAppEffectiveIsAI(app) ? 'Yes' : 'No',
+      markedForRemoval.has(app.appId) ? 'Yes' : 'No',
+      app.usage.totalSignIns.toString(),
+      app.riskLevel
+    ]);
+    downloadCSV('entra_marked_applications.csv', headers, rows);
+  };
 
   // Check backend server status on mount
   useEffect(() => {
@@ -1044,6 +1083,18 @@ function App() {
                 <FileSpreadsheet size={16} />
                 All Applications Scanned
               </button>
+              <button 
+                className={`tab-btn ${activeTab === 'marked' ? 'active' : ''}`}
+                onClick={() => setActiveTab('marked')}
+              >
+                <ShieldCheck size={16} />
+                Marked Apps
+                {(() => {
+                  const markedCount = new Set([...Object.keys(userAIMarks), ...Array.from(markedForRemoval)]).size;
+                  if (markedCount > 0) return <span className="badge-count-red">{markedCount}</span>;
+                  return null;
+                })()}
+              </button>
             </div>
 
             {/* =============================================================== */}
@@ -1395,6 +1446,36 @@ function App() {
                   </button>
                 </div>
 
+                <div className="filter-panel" style={{ marginBottom: '24px', background: '#171d24', border: '1px solid var(--border-color)', padding: '12px 18px', borderRadius: 'var(--radius-md)' }}>
+                  <div className="search-group flex-2">
+                    <Search size={18} className="search-icon" />
+                    <input 
+                      type="text" 
+                      placeholder="Search applications by name or publisher..."
+                      value={allAppsSearch}
+                      onChange={(e) => setAllAppsSearch(e.target.value)}
+                      className="search-field"
+                    />
+                  </div>
+                  <div className="filter-group flex-1">
+                    <label>App Type:</label>
+                    <select value={allAppsFilter} onChange={(e) => setAllAppsFilter(e.target.value as any)} className="filter-select">
+                      <option value="All">All Types</option>
+                      <option value="AI">AI Workloads Only</option>
+                      <option value="Standard">Standard Tools Only</option>
+                    </select>
+                  </div>
+                  <div className="filter-group flex-1">
+                    <label>Sort By:</label>
+                    <select value={allAppsSort} onChange={(e) => setAllAppsSort(e.target.value as any)} className="filter-select">
+                      <option value="SignIns">Total Sign-ins</option>
+                      <option value="Name">Application Name</option>
+                      <option value="RiskLevel">Risk Level</option>
+                      <option value="TrustScore">Trust Score</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="table-responsive">
                   <table className="audit-table">
                     <thead>
@@ -1411,12 +1492,34 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {results.allApplications.map(app => (
+                      {results.allApplications
+                        .filter(app => {
+                           const matchesSearch = app.name.toLowerCase().includes(allAppsSearch.toLowerCase()) || 
+                                                 app.publisher.toLowerCase().includes(allAppsSearch.toLowerCase());
+                           if (!matchesSearch) return false;
+                           const effectiveAI = getAppEffectiveIsAI(app);
+                           if (allAppsFilter === 'AI' && !effectiveAI) return false;
+                           if (allAppsFilter === 'Standard' && effectiveAI) return false;
+                           return true;
+                        })
+                        .sort((a, b) => {
+                           if (allAppsSort === 'SignIns') return b.usage.totalSignIns - a.usage.totalSignIns;
+                           if (allAppsSort === 'Name') return a.name.localeCompare(b.name);
+                           if (allAppsSort === 'TrustScore') return a.trustScore - b.trustScore;
+                           if (allAppsSort === 'RiskLevel') {
+                               const rMap = { High: 3, Medium: 2, Low: 1 };
+                               return rMap[b.riskLevel] - rMap[a.riskLevel];
+                           }
+                           return 0;
+                        })
+                        .map(app => {
+                          const effectiveAI = getAppEffectiveIsAI(app);
+                          return (
                         <tr key={app.appId}>
                           <td className="font-bold">{app.name}</td>
                           <td>{app.publisher}</td>
                           <td style={{ textAlign: 'center' }}>
-                            {app.isAI ? (
+                            {effectiveAI ? (
                               <span className="badge-tag shadow" style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>AI Workload</span>
                             ) : (
                               <span className="badge-tag certified" style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>Standard Tool</span>
@@ -1442,14 +1545,99 @@ function App() {
                             </span>
                           </td>
                           <td style={{ textAlign: 'right' }}>
-                            <button className="btn-secondary btn-xs" onClick={() => setSelectedApp(app)}>
-                              Details
-                            </button>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                              <button className="btn-secondary btn-xs" onClick={() => setSelectedApp(app)}>
+                                Details
+                              </button>
+                              <button className={`btn-secondary btn-xs ${effectiveAI ? 'outline' : ''}`} onClick={() => setUserAIMarks(p => ({ ...p, [app.appId]: !effectiveAI }))}>
+                                {effectiveAI ? 'Unmark AI' : 'Mark AI'}
+                              </button>
+                              <button className={`btn-secondary btn-xs ${markedForRemoval.has(app.appId) ? 'danger' : ''}`} onClick={() => toggleMarkForRemoval(app.appId)}>
+                                {markedForRemoval.has(app.appId) ? 'Unmark Removal' : 'Mark Removal'}
+                              </button>
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* =============================================================== */}
+            {/* TAB 5: MARKED APPS LIST */}
+            {/* =============================================================== */}
+            {activeTab === 'marked' && (
+              <div className="all-apps-tab panel animate-fade-in">
+                <div className="panel-header-simple" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
+                  <div style={{ textAlign: 'left' }}>
+                    <h4 style={{ margin: 0 }}>Marked Applications</h4>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>Applications that have been manually marked as AI or flagged for removal.</p>
+                  </div>
+                  <button className="btn-secondary btn-sm no-print" onClick={exportMarkedToCSV}>
+                    Export Marked CSV
+                  </button>
+                </div>
+
+                <div className="table-responsive">
+                  <table className="audit-table">
+                    <thead>
+                      <tr>
+                        <th>Application Name</th>
+                        <th>Publisher</th>
+                        <th style={{ textAlign: 'center' }}>Manual App Type</th>
+                        <th style={{ textAlign: 'center' }}>Marked For Removal</th>
+                        <th style={{ textAlign: 'center' }}>Total Sign-ins</th>
+                        <th style={{ textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.allApplications
+                        .filter(app => userAIMarks[app.appId] !== undefined || markedForRemoval.has(app.appId))
+                        .map(app => {
+                          const effectiveAI = getAppEffectiveIsAI(app);
+                          return (
+                        <tr key={`marked-${app.appId}`}>
+                          <td className="font-bold">{app.name}</td>
+                          <td>{app.publisher}</td>
+                          <td style={{ textAlign: 'center' }}>
+                            {effectiveAI ? (
+                              <span className="badge-tag shadow" style={{ backgroundColor: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>AI Workload</span>
+                            ) : (
+                              <span className="badge-tag certified" style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>Standard Tool</span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            {markedForRemoval.has(app.appId) ? (
+                              <span className="risk-badge-tag high" style={{ fontWeight: '700' }}>Flagged</span>
+                            ) : (
+                              <span className="risk-badge-tag low" style={{ fontWeight: '700' }}>No</span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>{app.usage.totalSignIns}</td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                              <button className="btn-secondary btn-xs" onClick={() => setSelectedApp(app)}>
+                                Details
+                              </button>
+                              <button className={`btn-secondary btn-xs ${effectiveAI ? 'outline' : ''}`} onClick={() => setUserAIMarks(p => ({ ...p, [app.appId]: !effectiveAI }))}>
+                                {effectiveAI ? 'Unmark AI' : 'Mark AI'}
+                              </button>
+                              <button className={`btn-secondary btn-xs ${markedForRemoval.has(app.appId) ? 'danger' : ''}`} onClick={() => toggleMarkForRemoval(app.appId)}>
+                                {markedForRemoval.has(app.appId) ? 'Unmark Removal' : 'Mark Removal'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )})}
+                    </tbody>
+                  </table>
+                  {results.allApplications.filter(app => userAIMarks[app.appId] !== undefined || markedForRemoval.has(app.appId)).length === 0 && (
+                    <div className="no-results" style={{ padding: '40px', textAlign: 'center' }}>
+                      <p>No applications have been manually marked yet.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
